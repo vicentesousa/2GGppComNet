@@ -11,3 +11,6 @@
 
 ## Configuração do Dispositivo
 [ConfiguracaoDispositivo.ipynb](notebooks/ConfiguracaoDispositivo.ipynb)
+
+## configuração do Asterisk
+[ConfiguracaoAsterisk.ipynb](notebooks/ConfiguracaoAsterisk.ipynb)
