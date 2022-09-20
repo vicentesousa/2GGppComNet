@@ -1,4 +1,4 @@
 # 2GGppComNet
 ## Instalação OpenBTS
-[Instalação](notebooks/
+[Instalação](notebooks/InstalacaoOpenBTS.ipynb)
 ## Configuração OpenBTS
