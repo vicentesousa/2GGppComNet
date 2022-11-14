@@ -1,16 +1,4 @@
 # 2GGppComNet
 
-## Instalação OpenBTS
-[InstalacaoOpenBTS.ipynb](notebooks/InstalacaoOpenBTS.ipynb)
-
-## Configuração OpenBTS
-[ConfiguracaOpenBTS.ipynb](notebooks/ConfiguracaoOpenBTS.ipynb)
-
-## Instalação do Subscriber Registry and Sipauthserve
-[InstalacaoServidorAutenticacao.ipynb](notebooks/InstalacaoServidorAutenticacao.ipynb)
-
-## Configuração do Dispositivo
-[ConfiguracaoDispositivo.ipynb](notebooks/ConfiguracaoDispositivo.ipynb)
-
-## configuração do Asterisk
-[ConfiguracaoAsterisk.ipynb](notebooks/ConfiguracaoAsterisk.ipynb)
+## Instalação e Configuração OpenBTS
+[OpenBTS.ipynb](notebooks/OpenBTS.ipynb)
