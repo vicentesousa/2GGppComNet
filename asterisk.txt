@@ -1,0 +1,160 @@
+sip.conf
+; Para cada celular (com seu IMSI correspondente), insira:
+; Celular 01 Iphone
+[IMSI724024443480174]
+callerid=5210387; esse é o número do telefone na rede
+canreinvite=no
+type=friend
+context=sip-external ; esse é o contexto do arquivo extensions.conf
+allow=gsm
+host=dynamic
+dtmfmode=info
+
+; Celular 02 Nokia
+[IMSI724058206362557]
+callerid=5210388
+canreinvite=no
+type=friend
+context=sip-external
+allow=gsm
+host=dynamic
+dtmfmode=info
+
+; Celular 03 Vicente
+[IMSI724024201894020]
+callerid=5210390
+canreinvite=no
+type=friend
+context=sip-external
+allow=gsm
+host=dynamic
+dtmfmode=info
+
+; Celular 04 Sansung
+[IMSI724118111670550]
+callerid=5210391
+canreinvite=no
+type=friend
+context=sip-external 
+allow=gsm
+host=dynamic
+dtmfmode=info
+
+Extensions.conf
+[demo]
+include => stdexten
+;
+; We start with what to do when a call first comes in.
+;
+exten => s,1,Wait(1)			; Wait a second, just for fun
+exten => s,n,Answer			; Answer the line
+exten => s,n,Set(TIMEOUT(digit)=5)	; Set Digit Timeout to 5 seconds
+exten => s,n,Set(TIMEOUT(response)=10)	; Set Response Timeout to 10 seconds
+exten => s,n(restart),BackGround(demo-congrats)	; Play a congratulatory message
+exten => s,n(instruct),BackGround(demo-instruct)	; Play some instructions
+exten => s,n,WaitExten			; Wait for an extension to be dialed.
+
+exten => 2,1,BackGround(demo-moreinfo)	; Give some more information.
+exten => 2,n,Goto(s,instruct)
+
+exten => 3,1,Set(LANGUAGE()=fr)		; Set language to french
+exten => 3,n,Goto(s,restart)		; Start with the congratulations
+
+exten => 1000,1,Goto(default,s,1)
+;
+; We also create an example user, 1234, who is on the console and has
+; voicemail, etc.
+;
+exten => 1234,1,Playback(transfer,skip)		; "Please hold while..."
+					; (but skip if channel is not up)
+exten => 1234,n,Gosub(${EXTEN},stdexten(${GLOBAL(CONSOLE)}))
+exten => 1234,n,Goto(default,s,1)		; exited Voicemail
+
+exten => 1235,1,Voicemail(1234,u)		; Right to voicemail
+
+exten => 1236,1,Dial(Console/dsp)		; Ring forever
+exten => 1236,n,Voicemail(1234,b)		; Unless busy
+
+;
+; # for when they're done with the demo
+;
+exten => #,1,Playback(demo-thanks)	; "Thanks for trying the demo"
+exten => #,n,Hangup			; Hang them up.
+
+;
+; A timeout and "invalid extension rule"
+;
+exten => t,1,Goto(#,1)			; If they take too long, give up
+exten => i,1,Playback(invalid)		; "That's not valid, try again"
+
+;
+; Create an extension, 500, for dialing the
+; Asterisk demo.
+;
+exten => 500,1,Playback(demo-abouttotry); Let them know what's going on
+exten => 500,n,Dial(IAX2/guest@pbx.digium.com/s@default)	; Call the Asterisk demo
+exten => 500,n,Playback(demo-nogo)	; Couldn't connect to the demo site
+exten => 500,n,Goto(s,6)		; Return to the start over message.
+
+;
+; Create an extension, 600, for evaluating echo latency.
+;
+exten => 600,1,Playback(demo-echotest)	; Let them know what's going on
+exten => 600,n,Echo			; Do the echo test
+exten => 600,n,Playback(demo-echodone)	; Let them know it's over
+exten => 600,n,Goto(s,6)		; Start over
+
+;
+;	You can use the Macro Page to intercom a individual user
+exten => 76245,1,Macro(page,SIP/Grandstream1)
+; or if your peernames are the same as extensions
+exten => _7XXX,1,Macro(page,SIP/${EXTEN})
+;
+;
+; System Wide Page at extension 7999
+;
+exten => 7999,1,Set(TIMEOUT(absolute)=60)
+exten => 7999,2,Page(Local/Grandstream1@page&Local/Xlite1@page&Local/1234@page/n,d)
+
+; Give voicemail at extension 8500
+;
+exten => 8500,1,VoicemailMain
+exten => 8500,n,Goto(s,6)
+;
+; Here's what a phone entry would look like (IXJ for example)
+;
+;exten => 1265,1,Dial(Phone/phone0,15)
+;exten => 1265,n,Goto(s,5)
+
+;
+;	The page context calls up the page macro that sets variables needed for auto-answer
+;	It is in is own context to make calling it from the Page() application as simple as
+;	Local/{peername}@page
+;
+
+; essa é uma macro (uma série de comandos) muito recomendada 
+; na literatura
+[macro-dialGSM]
+exten => s,1,Dial(SIP/${ARG1},20)
+exten => s,2,Goto(s-${DIALSTATUS},1)
+exten => s-CANCEL,1,Hangup
+exten => s-NOANSWER,1,Hangup
+exten => s-BUSY,1,Busy(30)
+exten => s-CONGESTION,1,Congestion(30)
+
+; Os nomes entre colchetes são as extensões, elas devem ter o 
+; mesmo nome do context no arquivo sip.conf 
+
+[sip-external]
+; inserir uma linha dessas para cada celular configurado no arquivo
+; sip.conf
+; Verifique que o número atribuído no callerid do sip.conf é usado
+; aqui
+exten => 5210387,1,Macro(dialGSM,IMSI724024443480174@127.0.0.1:5062)
+exten => 5210388,1,Macro(dialGSM,IMSI724058206362557@127.0.0.1:5062)
+exten => 5210390,1,Macro(dialGSM,IMSI724024201894020@127.0.0.1:5062)
+exten => 5210391,1,Macro(dialGSM,IMSI724118111670550@127.0.0.1:5062)
+
+; verificar se o context default (o que tem o número 600, echo test) é
+; chamado demo, se sim, incluí-lo aqui
+include => demo
