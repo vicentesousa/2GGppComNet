@@ -1,4 +1,4 @@
-sip.conf
+﻿sip.conf
 ; Para cada celular (com seu IMSI correspondente), insira:
 ; Celular 01 Iphone
 [IMSI724024443480174]
@@ -158,3 +158,41 @@ exten => 5210391,1,Macro(dialGSM,IMSI724118111670550@127.0.0.1:5062)
 ; verificar se o context default (o que tem o número 600, echo test) é
 ; chamado demo, se sim, incluí-lo aqui
 include => demo
+
+
+[stdexten]
+;
+; Standard extension subroutine:
+;   ${EXTEN} - Extension
+;   ${ARG1} - Device(s) to ring
+;   ${ARG2} - Optional context in Voicemail
+;
+; Note that the current version will drop through to the next priority in the
+; case of their pressing '#'.  This gives more flexibility in what do to next:
+; you can prompt for a new extension, or drop the call, or send them to a
+; general delivery mailbox, or...
+;
+; The use of the LOCAL() function is purely for convenience.  Any variable
+; initially declared as LOCAL() will disappear when the innermost Gosub context
+; in which it was declared returns.  Note also that you can declare a LOCAL()
+; variable on top of an existing variable, and its value will revert to its
+; previous value (before being declared as LOCAL()) upon Return.
+;
+exten => _X.,50000(stdexten),NoOp(Start stdexten)
+exten => _X.,n,Set(LOCAL(ext)=${EXTEN})
+exten => _X.,n,Set(LOCAL(dev)=${ARG1})
+exten => _X.,n,Set(LOCAL(cntx)=${ARG2})
+exten => _X.,n,Set(LOCAL(mbx)=${ext}${IF($[!${ISNULL(${cntx})}]?@${cntx})})
+exten => _X.,n,Dial(${dev},20)				; Ring the interface, 20 seconds maximum
+exten => _X.,n,Goto(stdexten-${DIALSTATUS},1)		; Jump based on status (NOANSWER,BUSY,CHANUNAVAIL,CONGESTION,ANSWER)
+
+exten => stdexten-NOANSWER,1,Voicemail(${mbx},u)	; If unavailable, send to voicemail w/ unavail announce
+exten => stdexten-NOANSWER,n,Return()			; If they press #, return to start
+
+exten => stdexten-BUSY,1,Voicemail(${mbx},b)		; If busy, send to voicemail w/ busy announce
+exten => stdexten-BUSY,n,Return()			; If they press #, return to start
+
+exten => _stde[x]te[n]-.,1,Goto(stdexten-NOANSWER,1)	; Treat anything else as no answer
+
+exten => a,1,VoicemailMain(${mbx})			; If they press *, send the user into VoicemailMain
+exten => a,n,Return()
